@@ -113,7 +113,7 @@ A comprehensive collaborative learning platform that enables students to study t
 ### 1. Clone the Repository
 ```bash
 git clone https://github.com/Austinhere7/virtual_study_group.git
-cd virtual_study_group
+cd edusync
 ```
 
 ### 2. Install Dependencies
@@ -183,7 +183,7 @@ The application will be available at:
 ## 📁 Project Structure
 
 ```
-virtual-study-group/
+edusync/
 ├── app/                          # Next.js App Router
 │   ├── api/                     # API routes
 │   │   ├── auth/               # Authentication endpoints
@@ -609,7 +609,7 @@ This project is open source and available under the [MIT License](LICENSE).
 
 **Austinhere7**
 - GitHub: [@Austinhere7](https://github.com/Austinhere7)
-- Repository: [virtual_study_group](https://github.com/Austinhere7/virtual_study_group)
+- Repository: [EduSync](https://github.com/Austinhere7/virtual_study_group)
 
 ## 🙏 Acknowledgments
 
