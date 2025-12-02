@@ -1,3 +1,8 @@
+/**
+ * EduSync - Tailwind CSS Configuration
+ * Custom design system for the collaborative learning platform
+ */
+
 import type { Config } from "tailwindcss";
 
 const config: Config = {
