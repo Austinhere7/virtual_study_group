@@ -5,11 +5,7 @@ This directory will contain screenshots of the application.
 ## Required Screenshots:
 
 1. **home.png** - Main landing page with feature cards
-2. **video-call.png** - Video conferencing interface
-3. **notes.png** - Notes repository page
-4. **questions.png** - Q&A forum interface
-5. **feedback.png** - Teacher feedback form
-6. **schedule.png** - Study session scheduler
+2. **login.png** - Login/authentication page
 
 ## How to Add Screenshots:
 

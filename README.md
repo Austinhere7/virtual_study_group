@@ -263,25 +263,9 @@ virtual-study-group/
 ![Home Page](docs/screenshots/home.png)
 *Main landing page with feature cards and upcoming sessions*
 
-### Video Call Interface
-![Video Call](docs/screenshots/video-call.png)
-*Real-time video conferencing with chat and participant list*
-
-### Notes Repository
-![Notes Repository](docs/screenshots/notes.png)
-*Browse, search, and upload study materials*
-
-### Q&A Forum
-![Q&A Forum](docs/screenshots/questions.png)
-*Ask questions and get answers from the community*
-
-### Teacher Feedback
-![Feedback System](docs/screenshots/feedback.png)
-*Provide anonymous or public feedback to instructors*
-
-### Study Session Scheduler
-![Scheduler](docs/screenshots/schedule.png)
-*Plan and manage virtual study sessions*
+### Login Page
+![Login Page](docs/screenshots/login.png)
+*User authentication interface*
 
 ## 📡 API Documentation
 
