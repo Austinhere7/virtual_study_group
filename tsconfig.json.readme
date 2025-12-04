@@ -1,0 +1,9 @@
+/**
+ * TypeScript Configuration
+ * Compiler options for EduSync Next.js application
+ * 
+ * Configured for:
+ * - Next.js App Router
+ * - Strict type checking
+ * - Path aliases (@/*)
+ */

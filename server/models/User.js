@@ -33,6 +33,14 @@ const UserSchema = new mongoose.Schema({
   grade: {
     type: String,
   },
+  emailVerified: {
+    type: Boolean,
+    default: false,
+  },
+  verifiedAt: {
+    type: Date,
+    default: null,
+  },
   createdAt: {
     type: Date,
     default: Date.now,

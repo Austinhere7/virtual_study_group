@@ -1,0 +1,1 @@
+Initial commit: Virtual Study Group application==>Initialize EduSync project with Next.js, React, and comprehensive features

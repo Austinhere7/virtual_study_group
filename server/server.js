@@ -29,10 +29,17 @@ mongoose
 
 // Define routes
 app.use("/api/auth", require("./routes/auth"))
+app.use("/api/profile", require("./routes/profile"))
+app.use("/api/dashboard", require("./routes/dashboard"))
 app.use("/api/notes", require("./routes/notes"))
 app.use("/api/questions", require("./routes/questions"))
 app.use("/api/feedback", require("./routes/feedback"))
 app.use("/api/study-sessions", require("./routes/study-sessions"))
+app.use("/api/verify-email", require("./routes/verify-email"))
+app.use("/api/password-reset", require("./routes/password-reset"))
+app.use("/api/notifications", require("./routes/notifications"))
+app.use("/api/study-groups", require("./routes/study-groups"))
+app.use("/api/messages", require("./routes/messages"))
 
 // Serve uploaded files
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")))

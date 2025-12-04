@@ -53,6 +53,47 @@ A comprehensive collaborative learning platform that enables students to study t
 - **Subject Filters**: Find sessions by subject area
 - **Real-time Updates**: See current participant counts
 
+### 👤 User Profiles & Dashboard
+- **Personalized Dashboard**: View your statistics, recent activity, and quick links
+- **Editable Profiles**: Customize bio, avatar, subject interests, and grade level
+- **Social Links**: Add Twitter, LinkedIn, and GitHub profiles
+- **Activity Tracking**: Monitor notes uploaded, questions asked, answers given, and sessions attended
+- **Profile Stats**: Showcase your contributions to the community
+- **Public/Private Profiles**: Control who can view your profile information
+
+### 🔐 Advanced Authentication
+- **Email Verification**: Verify email addresses with secure tokens
+- **Password Recovery**: Reset forgotten passwords via email
+- **Change Password**: Update passwords securely from settings
+- **JWT Security**: Token-based authentication with secure sessions
+- **Account Management**: Full control over account settings and privacy
+
+### 🔔 Notification System
+- **Real-Time Alerts**: Get notified about new answers, session updates, and mentions
+- **Notification Center**: View all notifications in one organized place
+- **Unread Tracking**: Badge counters for unread notifications
+- **Customizable Preferences**: Choose which notifications to receive
+- **Action Buttons**: Mark as read or delete directly from notifications
+- **Filter Options**: View all, unread, or read notifications
+
+### 👥 Study Groups
+- **Create Groups**: Start study groups for specific subjects and grade levels
+- **Browse & Join**: Discover and join public study groups
+- **Group Management**: Full CRUD operations for group creators
+- **Member Limits**: Set maximum members for focused collaboration
+- **Public/Private Groups**: Control group visibility and access
+- **Group Stats**: Track sessions, messages, and shared resources
+- **Subject Tags**: Organize groups with relevant tags
+
+### 💬 Direct Messaging
+- **One-on-One Chat**: Private conversations with other users
+- **Conversation List**: View all your conversations in one place
+- **Unread Badges**: See unread message counts at a glance
+- **Read Receipts**: Know when messages are read (single/double check)
+- **Message Reactions**: React to messages with emojis
+- **Edit & Delete**: Modify or remove your sent messages
+- **Real-Time Updates**: Instant message delivery and notifications
+
 ### 🎨 Modern UI/UX
 - **Dark/Light Mode**: Built-in theme switching for comfortable viewing
 - **Responsive Design**: Seamless experience across desktop, tablet, and mobile devices
@@ -91,17 +132,23 @@ A comprehensive collaborative learning platform that enables students to study t
 | Feature | Description |
 |---------|-------------|
 | 🔐 **User Authentication** | Secure login and registration with JWT tokens |
-| 👥 **Study Groups** | Create and join virtual study rooms |
+| ✉️ **Email Verification** | Verify email addresses with secure token system |
+| 🔑 **Password Recovery** | Reset forgotten passwords via email |
+| 👤 **User Profiles** | Customizable profiles with avatars, bio, and social links |
+| 📊 **Personal Dashboard** | Statistics, activity tracking, and quick actions |
+| 👥 **Study Groups** | Create and join virtual study groups by subject |
 | 📹 **Video Calls** | High-quality video conferencing with WebRTC |
 | 📁 **File Management** | Upload, organize, and download study materials |
 | ❓ **Q&A System** | Ask questions and get community answers |
 | ⭐ **Rating System** | Vote on helpful answers and questions |
 | 📊 **Teacher Feedback** | Anonymous or public feedback to instructors |
 | 🗓️ **Scheduling** | Plan and manage study sessions |
-| 💬 **Live Chat** | Real-time messaging during video sessions |
-| 🔍 **Smart Search** | Find notes and questions quickly |
+| 💬 **Direct Messaging** | One-on-one private conversations with read receipts |
+| 🔔 **Notifications** | Real-time alerts for answers, sessions, and mentions |
+| 🔍 **Smart Search** | Find notes, questions, and groups quickly |
 | 📱 **Responsive** | Works on all devices and screen sizes |
 | 🎨 **Theming** | Dark and light mode support |
+| ⚙️ **Settings** | Account management, privacy controls, and preferences |
 
 ## 🛠️ Installation & Setup
 
@@ -147,8 +194,16 @@ JWT_SECRET=your_jwt_secret_key
 PORT=5000
 NODE_ENV=development
 
-# Next.js (optional)
-NEXT_PUBLIC_API_URL=http://localhost:5000
+# Next.js
+NEXT_PUBLIC_API_URL=http://localhost:5000/api
+FRONTEND_URL=http://localhost:3000
+
+# Email Configuration (for verification and password reset)
+EMAIL_SERVICE=gmail
+EMAIL_USER=your_email@gmail.com
+EMAIL_PASSWORD=your_app_password_here
+# Note: For Gmail, use an App Password
+# Generate at: https://myaccount.google.com/apppasswords
 ```
 
 ### 4. Run the Application
@@ -187,26 +242,68 @@ edusync/
 ├── app/                          # Next.js App Router
 │   ├── api/                     # API routes
 │   │   ├── auth/               # Authentication endpoints
+│   │   ├── profile/            # User profile management
+│   │   ├── dashboard/          # Dashboard statistics
 │   │   ├── notes/              # Notes management
 │   │   ├── questions/          # Q&A system
 │   │   ├── feedback/           # Teacher feedback
-│   │   └── study-sessions/     # Session management
+│   │   ├── study-sessions/     # Session management
+│   │   ├── study-groups/       # Study groups CRUD
+│   │   ├── messages/           # Direct messaging
+│   │   ├── notifications/      # Notification system
+│   │   ├── verify-email/       # Email verification
+│   │   └── password-reset/     # Password recovery
+│   ├── dashboard/              # User dashboard page
+│   ├── profile/                # Profile view/edit page
+│   ├── settings/               # Account settings page
 │   ├── feedback/               # Feedback page
 │   ├── notes/                  # Notes repository page
 │   ├── questions/              # Q&A forum page
 │   ├── schedule/               # Study sessions page
+│   ├── study-groups/           # Study groups page
+│   ├── messages/               # Direct messaging page
+│   ├── notifications/          # Notifications center
 │   ├── video-call/             # Video conferencing page
+│   ├── verify-email/           # Email verification page
+│   ├── reset-password/         # Password reset page
+│   ├── forgot-password/        # Request password reset
 │   ├── register/               # User registration
 │   ├── layout.tsx              # Root layout
 │   ├── page.tsx                # Home page
 │   └── globals.css             # Global styles
 ├── components/                  # React components
 │   ├── ui/                     # shadcn/ui components
-│   └── theme-provider.tsx      # Theme context
+│   ├── theme-provider.tsx      # Theme context
+│   ├── theme-toggle.tsx        # Dark/light mode toggle
+│   └── navbar.tsx              # Navigation bar
 ├── server/                      # Backend server
 │   ├── models/                 # MongoDB models
+│   │   ├── User.js            # User schema
+│   │   ├── Profile.js         # Profile schema
+│   │   ├── Note.js            # Notes schema
+│   │   ├── Question.js        # Q&A schema
+│   │   ├── Feedback.js        # Feedback schema
+│   │   ├── StudySession.js    # Sessions schema
+│   │   ├── StudyGroup.js      # Groups schema
+│   │   ├── Message.js         # Messages schema
+│   │   ├── Notification.js    # Notifications schema
+│   │   ├── EmailVerification.js # Email verification
+│   │   └── PasswordReset.js   # Password reset tokens
 │   ├── routes/                 # Express routes
+│   │   ├── auth.js            # Authentication
+│   │   ├── profile.js         # Profile management
+│   │   ├── dashboard.js       # Dashboard data
+│   │   ├── notes.js           # Notes endpoints
+│   │   ├── questions.js       # Q&A endpoints
+│   │   ├── feedback.js        # Feedback endpoints
+│   │   ├── study-sessions.js  # Session endpoints
+│   │   ├── study-groups.js    # Groups endpoints
+│   │   ├── messages.js        # Messaging endpoints
+│   │   ├── notifications.js   # Notifications endpoints
+│   │   ├── verify-email.js    # Email verification
+│   │   └── password-reset.js  # Password recovery
 │   ├── middleware/             # Custom middleware
+│   │   └── auth.js            # JWT authentication
 │   └── server.js               # Server entry point
 ├── client/                      # Legacy React client (optional)
 │   └── src/                    # Client source files

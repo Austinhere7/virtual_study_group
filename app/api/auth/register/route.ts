@@ -18,32 +18,29 @@ export async function POST(request: NextRequest) {
     const { firstName, lastName, email, password, role } = body
 
     if (!firstName || !lastName || !email || !password || !role) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
+      return NextResponse.json({ message: "Missing required fields" }, { status: 400 })
     }
 
     // Register the user
     const user = await auth.registerUser(body)
 
-    // Create user in the database
-    await db.createUser({
-      firstName,
-      lastName,
-      email,
-      role,
-      subject: body.subject,
-      grade: body.grade,
-    })
+    // Create a simple token (in production, use JWT)
+    const token = `mock-token-${user.id}-${Date.now()}`
 
-    // Return success response (without password)
+    // Return success response with token and user data
     return NextResponse.json({
-      id: user.id,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      email: user.email,
-      role: user.role,
-    })
+      message: "Registration successful",
+      token,
+      user: {
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        role: user.role,
+      }
+    }, { status: 201 })
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || "Failed to register user" }, { status: 400 })
+    return NextResponse.json({ message: error.message || "Failed to register user" }, { status: 400 })
   }
 }
 

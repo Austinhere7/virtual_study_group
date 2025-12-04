@@ -17,22 +17,29 @@ export async function POST(request: NextRequest) {
     const { email, password } = body
 
     if (!email || !password) {
-      return NextResponse.json({ error: "Email and password are required" }, { status: 400 })
+      return NextResponse.json({ message: "Email and password are required" }, { status: 400 })
     }
 
     // Login the user
     const user = await auth.login({ email, password })
 
-    // Return success response (without password)
+    // Create a simple token (in production, use JWT)
+    const token = `mock-token-${user.id}-${Date.now()}`
+
+    // Return success response with token and user data
     return NextResponse.json({
-      id: user.id,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      email: user.email,
-      role: user.role,
+      message: "Login successful",
+      token,
+      user: {
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        role: user.role,
+      }
     })
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || "Invalid email or password" }, { status: 401 })
+    return NextResponse.json({ message: error.message || "Invalid email or password" }, { status: 401 })
   }
 }
 
