@@ -2,7 +2,8 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -21,6 +22,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
+import { LoadingSpinner } from "@/components/loading-spinner"
 import { LucideCalendar, LucideVideo, LucideUsers, LucideClock, LucidePlus } from "lucide-react"
 
 // Mock data for study sessions
@@ -80,6 +82,9 @@ const mockSessions = [
 ]
 
 export default function SchedulePage() {
+  const router = useRouter()
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [newSession, setNewSession] = useState({
     title: "",
@@ -91,6 +96,16 @@ export default function SchedulePage() {
     maxParticipants: "",
   })
   const [activeTab, setActiveTab] = useState("upcoming")
+
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    if (!token) {
+      router.push('/login')
+    } else {
+      setIsAuthenticated(true)
+      setLoading(false)
+    }
+  }, [router])
 
   // Get today's date in YYYY-MM-DD format for the date input min value
   const today = new Date().toISOString().split("T")[0]
@@ -150,6 +165,14 @@ export default function SchedulePage() {
       maxParticipants: "",
     })
     // Show success message or update UI
+  }
+
+  if (loading) {
+    return <LoadingSpinner fullScreen text="Loading schedule..." />
+  }
+
+  if (!isAuthenticated) {
+    return null
   }
 
   return (
@@ -338,55 +361,117 @@ function SessionCard({
   formatDate: (date: string) => string
   formatTime: (time: string) => string
 }) {
-  return (
-    <Card>
-      <CardHeader>
-        <div className="flex justify-between items-start">
-          <div>
-            <Badge variant="outline" className="mb-2">
-              {session.subject}
-            </Badge>
-            <CardTitle>{session.title}</CardTitle>
-            <CardDescription className="mt-1">Hosted by {session.host}</CardDescription>
-          </div>
-          <Avatar>
-            <AvatarImage src={session.hostAvatar} alt={session.host} />
-            <AvatarFallback>{session.host.charAt(0)}</AvatarFallback>
-          </Avatar>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <p className="text-sm text-muted-foreground mb-4">{session.description}</p>
+  const [detailsOpen, setDetailsOpen] = useState(false)
 
-        <div className="space-y-2">
-          <div className="flex items-center text-sm">
-            <LucideCalendar className="h-4 w-4 mr-2 text-muted-foreground" />
-            <span>{formatDate(session.date)}</span>
+  const handleJoinSession = () => {
+    // Navigate to video call page with session ID
+    window.location.href = `/video-call?session=${session.id}`
+  }
+
+  return (
+    <>
+      <Card>
+        <CardHeader>
+          <div className="flex justify-between items-start">
+            <div>
+              <Badge variant="outline" className="mb-2">
+                {session.subject}
+              </Badge>
+              <CardTitle>{session.title}</CardTitle>
+              <CardDescription className="mt-1">Hosted by {session.host}</CardDescription>
+            </div>
+            <Avatar>
+              <AvatarImage src={session.hostAvatar} alt={session.host} />
+              <AvatarFallback>{session.host.charAt(0)}</AvatarFallback>
+            </Avatar>
           </div>
-          <div className="flex items-center text-sm">
-            <LucideClock className="h-4 w-4 mr-2 text-muted-foreground" />
-            <span>
-              {formatTime(session.time)} ({session.duration} minutes)
-            </span>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground mb-4">{session.description}</p>
+
+          <div className="space-y-2">
+            <div className="flex items-center text-sm">
+              <LucideCalendar className="h-4 w-4 mr-2 text-muted-foreground" />
+              <span>{formatDate(session.date)}</span>
+            </div>
+            <div className="flex items-center text-sm">
+              <LucideClock className="h-4 w-4 mr-2 text-muted-foreground" />
+              <span>
+                {formatTime(session.time)} ({session.duration} minutes)
+              </span>
+            </div>
+            <div className="flex items-center text-sm">
+              <LucideUsers className="h-4 w-4 mr-2 text-muted-foreground" />
+              <span>
+                {session.participants}/{session.maxParticipants} participants
+              </span>
+            </div>
           </div>
-          <div className="flex items-center text-sm">
-            <LucideUsers className="h-4 w-4 mr-2 text-muted-foreground" />
-            <span>
-              {session.participants}/{session.maxParticipants} participants
-            </span>
+        </CardContent>
+        <CardFooter>
+          <div className="flex justify-between w-full gap-2">
+            <Button variant="outline" onClick={() => setDetailsOpen(true)}>View Details</Button>
+            <Button onClick={handleJoinSession}>
+              <LucideVideo className="mr-2 h-4 w-4" />
+              Join Session
+            </Button>
           </div>
-        </div>
-      </CardContent>
-      <CardFooter>
-        <div className="flex justify-between w-full">
-          <Button variant="outline">View Details</Button>
-          <Button>
-            <LucideVideo className="mr-2 h-4 w-4" />
-            Join Session
-          </Button>
-        </div>
-      </CardFooter>
-    </Card>
+        </CardFooter>
+      </Card>
+
+      <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{session.title}</DialogTitle>
+            <DialogDescription>Session Details</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <h4 className="font-semibold mb-1">Description</h4>
+              <p className="text-sm text-muted-foreground">{session.description}</p>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-1">Subject</h4>
+              <Badge variant="outline">{session.subject}</Badge>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-1">Host</h4>
+              <div className="flex items-center gap-2">
+                <Avatar>
+                  <AvatarImage src={session.hostAvatar} alt={session.host} />
+                  <AvatarFallback>{session.host.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <span className="text-sm">{session.host}</span>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <h4 className="font-semibold mb-1">Date & Time</h4>
+                <p className="text-sm text-muted-foreground">{formatDate(session.date)}</p>
+                <p className="text-sm text-muted-foreground">{formatTime(session.time)}</p>
+              </div>
+              <div>
+                <h4 className="font-semibold mb-1">Duration</h4>
+                <p className="text-sm text-muted-foreground">{session.duration} minutes</p>
+              </div>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-1">Participants</h4>
+              <p className="text-sm text-muted-foreground">
+                {session.participants}/{session.maxParticipants} joined
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDetailsOpen(false)}>Close</Button>
+            <Button onClick={handleJoinSession}>
+              <LucideVideo className="mr-2 h-4 w-4" />
+              Join Session
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }
 

@@ -99,16 +99,11 @@ export default function MessagesPage() {
   }
 
   if (loading) {
-    return (
-      <div className="container mx-auto px-4 py-12">
-        <div className="flex items-center justify-center h-96">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading messages...</p>
-          </div>
-        </div>
-      </div>
-    )
+    return <LoadingSpinner fullScreen text="Loading messages..." />
+  }
+
+  if (!isAuthenticated) {
+    return null
   }
 
   return (
@@ -207,10 +202,8 @@ export default function MessagesPage() {
               <CardContent className="pt-6 space-y-4">
                 {conversationLoading ? (
                   <div className="flex items-center justify-center h-64">
-                    <div className="text-center">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-                      <p className="text-sm text-muted-foreground">Loading messages...</p>
-                    </div>
+                    <LoadingSpinnerCompact />
+                    <span className="ml-2 text-sm text-muted-foreground">Loading messages...</span>
                   </div>
                 ) : messages.length > 0 ? (
                   messages.map((msg) => (

@@ -3,6 +3,7 @@
 import type React from "react"
 
 import { useState, useEffect, useRef } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -18,8 +19,12 @@ import {
 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { LoadingSpinner } from "@/components/loading-spinner"
 
 export default function VideoCallPage() {
+  const router = useRouter()
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [isMicOn, setIsMicOn] = useState(true)
   const [isVideoOn, setIsVideoOn] = useState(true)
   const [message, setMessage] = useState("")
@@ -29,6 +34,16 @@ export default function VideoCallPage() {
     { sender: "Alex Johnson", text: "I have some questions about the last problem set.", time: "2:32 PM" },
   ])
   const localVideoRef = useRef<HTMLVideoElement>(null)
+
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    if (!token) {
+      router.push('/login')
+    } else {
+      setIsAuthenticated(true)
+      setLoading(false)
+    }
+  }, [router])
 
   useEffect(() => {
     // Simulating getting user media for the demo
@@ -76,6 +91,14 @@ export default function VideoCallPage() {
     { name: "Alex Johnson", status: "online", avatar: "/placeholder.svg?height=40&width=40" },
     { name: "Sarah Williams", status: "away", avatar: "/placeholder.svg?height=40&width=40" },
   ]
+
+  if (loading) {
+    return <LoadingSpinner fullScreen text="Loading video call..." />
+  }
+
+  if (!isAuthenticated) {
+    return null
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">

@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { LoadingSpinnerCompact } from "@/components/loading-spinner"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { LucideCheckCircle, LucideMail } from "lucide-react"
@@ -94,7 +95,14 @@ export default function ForgotPasswordPage() {
                 </div>
 
                 <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Sending..." : "Send Reset Link"}
+                  {loading ? (
+                    <>
+                      <LoadingSpinnerCompact />
+                      <span className="ml-2">Sending...</span>
+                    </>
+                  ) : (
+                    "Send Reset Link"
+                  )}
                 </Button>
 
                 <div className="text-center text-sm text-muted-foreground">

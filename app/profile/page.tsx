@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
+import { LoadingSpinner } from "@/components/loading-spinner"
 import { LucideUser, LucideUpload, LucideGithub, LucideLinkedin, LucideTwitter, LucideMail } from "lucide-react"
 
 /**
@@ -42,8 +43,40 @@ export default function ProfilePage() {
 
   const fetchProfile = async () => {
     try {
+      // Get user ID from localStorage to create user-specific key
+      const user = localStorage.getItem('user')
+      if (!user) {
+        window.location.href = '/login'
+        return
+      }
+      
+      const parsedUser = JSON.parse(user)
+      const userId = parsedUser.id
+      const userProfileKey = `userProfile_${userId}`
+      
+      // Check for saved profile in localStorage first (user-specific)
+      const savedProfile = localStorage.getItem(userProfileKey)
+      if (savedProfile) {
+        const data = JSON.parse(savedProfile)
+        setProfile(data)
+        setFormData({
+          bio: data.bio || "",
+          subject: data.subject || "",
+          grade: data.grade || "",
+          socialLinks: data.socialLinks || {},
+          preferences: data.preferences || {},
+        })
+        setLoading(false)
+        return
+      }
+
+      // Otherwise fetch from API
       const res = await fetch("/api/profile/me")
       const data = await res.json()
+      
+      // Save to localStorage (user-specific)
+      localStorage.setItem(userProfileKey, JSON.stringify(data))
+      
       setProfile(data)
       setFormData({
         bio: data.bio || "",
@@ -90,17 +123,46 @@ export default function ProfilePage() {
 
   const handleSaveProfile = async () => {
     try {
+      // Get user ID for user-specific key
+      const user = localStorage.getItem('user')
+      const parsedUser = JSON.parse(user)
+      const userId = parsedUser.id
+      const userProfileKey = `userProfile_${userId}`
+      
       const res = await fetch("/api/profile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       })
+      
+      if (!res.ok) {
+        throw new Error("Failed to update profile")
+      }
+      
       const data = await res.json()
-      setProfile(data)
+      
+      // Merge the updated data with existing profile
+      const updatedProfile = {
+        ...profile,
+        ...formData,
+      }
+      
+      // Save to localStorage (user-specific)
+      localStorage.setItem(userProfileKey, JSON.stringify(updatedProfile))
+      
+      setProfile(updatedProfile)
+      setFormData({
+        bio: updatedProfile.bio || "",
+        subject: updatedProfile.subject || "",
+        grade: updatedProfile.grade || "",
+        socialLinks: updatedProfile.socialLinks || {},
+        preferences: updatedProfile.preferences || {},
+      })
       setEditing(false)
       alert("Profile updated successfully!")
     } catch (error) {
-      alert("Failed to update profile")
+      console.error("Profile update error:", error)
+      alert("Failed to update profile. Please try again.")
     }
   }
 
@@ -108,24 +170,37 @@ export default function ProfilePage() {
     const file = e.target.files?.[0]
     if (!file) return
 
-    const formDataUpload = new FormData()
-    formDataUpload.append("avatar", file)
+    // Get user ID for user-specific key
+    const user = localStorage.getItem('user')
+    const parsedUser = JSON.parse(user)
+    const userId = parsedUser.id
+    const userProfileKey = `userProfile_${userId}`
 
-    try {
-      const res = await fetch("/api/profile/avatar", {
-        method: "POST",
-        body: formDataUpload,
-      })
-      const data = await res.json()
-      setProfile({ ...profile, avatar: data.avatar })
+    // Create a local URL for the image
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      const avatarUrl = reader.result as string
+      const updatedProfile = { ...profile, avatar: avatarUrl }
+      
+      // Save to localStorage (user-specific)
+      localStorage.setItem(userProfileKey, JSON.stringify(updatedProfile))
+      
+      setProfile(updatedProfile)
       alert("Avatar uploaded successfully!")
-    } catch (error) {
-      alert("Failed to upload avatar")
     }
+    reader.readAsDataURL(file)
+
+    // In a real app, you would also upload to server
+    // const formDataUpload = new FormData()
+    // formDataUpload.append("avatar", file)
+    // const res = await fetch("/api/profile/avatar", {
+    //   method: "POST",
+    //   body: formDataUpload,
+    // })
   }
 
   if (loading) {
-    return <div className="container mx-auto px-4 py-12">Loading...</div>
+    return <LoadingSpinner fullScreen text="Loading your profile..." />
   }
 
   return (

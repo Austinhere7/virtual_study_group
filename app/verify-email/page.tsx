@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { LucideCheckCircle, LucideXCircle, LucideLoader2 } from "lucide-react"
 import Link from "next/link"
+import { LoadingSpinner } from "@/components/loading-spinner"
 
 /**
  * Email Verification Page
@@ -60,10 +61,9 @@ export default function VerifyEmailPage() {
           </CardHeader>
           <CardContent className="flex flex-col items-center space-y-4">
             {status === "loading" && (
-              <>
-                <LucideLoader2 className="h-16 w-16 text-primary animate-spin" />
-                <p className="text-muted-foreground">Verifying your email...</p>
-              </>
+              <div className="py-8">
+                <LoadingSpinner size="lg" text="Verifying your email..." />
+              </div>
             )}
 
             {status === "success" && (

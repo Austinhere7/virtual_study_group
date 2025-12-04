@@ -47,6 +47,21 @@ export function Navbar() {
 
   const fetchUserProfile = async () => {
     try {
+      const userData = localStorage.getItem('user')
+      if (!userData) return
+      
+      const parsedUser = JSON.parse(userData)
+      const userProfileKey = `userProfile_${parsedUser.id}`
+      
+      // First check localStorage for user-specific profile
+      const savedProfile = localStorage.getItem(userProfileKey)
+      if (savedProfile) {
+        const profile = JSON.parse(savedProfile)
+        setUserAvatar(profile.avatar)
+        return
+      }
+      
+      // Otherwise fetch from API
       const res = await fetch('/api/profile/me')
       const data = await res.json()
       setUserAvatar(data.avatar)
@@ -56,6 +71,19 @@ export function Navbar() {
   }
 
   const handleLogout = () => {
+    // Get user ID to clear user-specific data
+    const userData = localStorage.getItem('user')
+    if (userData) {
+      try {
+        const parsedUser = JSON.parse(userData)
+        const userProfileKey = `userProfile_${parsedUser.id}`
+        localStorage.removeItem(userProfileKey)
+      } catch (error) {
+        console.error('Error clearing user profile:', error)
+      }
+    }
+    
+    // Clear common auth data
     localStorage.removeItem('token')
     localStorage.removeItem('user')
     window.location.href = '/'

@@ -2,8 +2,10 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
+import { LoadingSpinner } from "@/components/loading-spinner"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -20,11 +22,24 @@ const teachers = [
 ]
 
 export default function FeedbackPage() {
+  const router = useRouter()
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [selectedTeacher, setSelectedTeacher] = useState("")
   const [rating, setRating] = useState("")
   const [feedbackText, setFeedbackText] = useState("")
   const [isAnonymous, setIsAnonymous] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
+
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    if (!token) {
+      router.push('/login')
+    } else {
+      setIsAuthenticated(true)
+      setLoading(false)
+    }
+  }, [router])
   const [previousFeedback, setPreviousFeedback] = useState([
     {
       id: 1,
@@ -78,6 +93,14 @@ export default function FeedbackPage() {
     setTimeout(() => {
       setIsSubmitted(false)
     }, 3000)
+  }
+
+  if (loading) {
+    return <LoadingSpinner fullScreen text="Loading..." />
+  }
+
+  if (!isAuthenticated) {
+    return null
   }
 
   return (

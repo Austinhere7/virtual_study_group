@@ -2,7 +2,8 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -10,6 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { LucideUpload, LucideFile, LucideFileText, LucideFolder, LucideSearch, LucideDownload } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
+import { LoadingSpinner } from "@/components/loading-spinner"
 import {
   Dialog,
   DialogContent,
@@ -71,9 +73,24 @@ const mockNotes = [
 ]
 
 export default function NotesPage() {
+  const router = useRouter()
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null)
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false)
+  const [previewDialogOpen, setPreviewDialogOpen] = useState(false)
+  const [selectedNote, setSelectedNote] = useState<any>(null)
+
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    if (!token) {
+      router.push('/login')
+    } else {
+      setIsAuthenticated(true)
+      setLoading(false)
+    }
+  }, [router])
   const [newNote, setNewNote] = useState({
     title: "",
     subject: "",
@@ -117,6 +134,23 @@ export default function NotesPage() {
     // Show success message or update UI
   }
 
+  // Handle preview
+  const handlePreview = (note: any) => {
+    setSelectedNote(note)
+    setPreviewDialogOpen(true)
+  }
+
+  // Handle download
+  const handleDownload = (note: any) => {
+    // In a real app, this would download the actual file
+    alert(`Downloading: ${note.title}.${note.type}`)
+    // You could create a temporary download link
+    // const link = document.createElement('a')
+    // link.href = note.fileUrl
+    // link.download = `${note.title}.${note.type}`
+    // link.click()
+  }
+
   // Get file icon based on type
   const getFileIcon = (type: string) => {
     switch (type) {
@@ -129,6 +163,14 @@ export default function NotesPage() {
       default:
         return <LucideFile className="h-6 w-6" />
     }
+  }
+
+  if (loading) {
+    return <LoadingSpinner fullScreen text="Loading notes..." />
+  }
+
+  if (!isAuthenticated) {
+    return null
   }
 
   return (
@@ -258,11 +300,11 @@ export default function NotesPage() {
                     </div>
                   </CardContent>
                   <CardFooter>
-                    <div className="flex justify-between w-full">
-                      <Button variant="outline" size="sm">
+                    <div className="flex justify-between w-full gap-2">
+                      <Button variant="outline" size="sm" onClick={() => handlePreview(note)}>
                         Preview
                       </Button>
-                      <Button size="sm">
+                      <Button size="sm" onClick={() => handleDownload(note)}>
                         <LucideDownload className="mr-2 h-4 w-4" />
                         Download
                       </Button>
@@ -299,11 +341,63 @@ export default function NotesPage() {
         <TabsContent value="recent" className="mt-0">
           <div className="text-center py-12">
             <LucideFolder className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium">No recently viewed notes</h3>
-            <p className="text-muted-foreground mt-1">Notes you view will appear here for quick access</p>
+            <h3 className="text-lg font-medium">No recently accessed notes</h3>
+            <p className="text-muted-foreground mt-1">Notes you view or download will appear here</p>
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Preview Dialog */}
+      <Dialog open={previewDialogOpen} onOpenChange={setPreviewDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{selectedNote?.title}</DialogTitle>
+            <DialogDescription>
+              Uploaded by {selectedNote?.uploadedBy} • {selectedNote?.subject}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-6">
+            <div className="flex items-center justify-center bg-muted rounded-lg p-12">
+              <div className="text-center">
+                {getFileIcon(selectedNote?.type || "pdf")}
+                <p className="mt-4 text-sm text-muted-foreground">
+                  Preview not available for {selectedNote?.type?.toUpperCase()} files
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Download the file to view its contents
+                </p>
+              </div>
+            </div>
+            <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <p className="font-semibold">File Type</p>
+                <p className="text-muted-foreground">{selectedNote?.type?.toUpperCase()}</p>
+              </div>
+              <div>
+                <p className="font-semibold">File Size</p>
+                <p className="text-muted-foreground">{selectedNote?.size}</p>
+              </div>
+              <div>
+                <p className="font-semibold">Upload Date</p>
+                <p className="text-muted-foreground">
+                  {selectedNote && new Date(selectedNote.date).toLocaleDateString()}
+                </p>
+              </div>
+              <div>
+                <p className="font-semibold">Subject</p>
+                <p className="text-muted-foreground">{selectedNote?.subject}</p>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPreviewDialogOpen(false)}>Close</Button>
+            <Button onClick={() => selectedNote && handleDownload(selectedNote)}>
+              <LucideDownload className="mr-2 h-4 w-4" />
+              Download
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

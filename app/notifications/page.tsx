@@ -107,16 +107,11 @@ export default function NotificationsPage() {
   })
 
   if (loading) {
-    return (
-      <div className="container mx-auto px-4 py-12">
-        <div className="flex items-center justify-center h-96">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading notifications...</p>
-          </div>
-        </div>
-      </div>
-    )
+    return <LoadingSpinner fullScreen text="Loading notifications..." />
+  }
+
+  if (!isAuthenticated) {
+    return null
   }
 
   return (

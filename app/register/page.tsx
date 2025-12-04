@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Progress } from "@/components/ui/progress"
+import { LoadingSpinnerCompact } from "@/components/loading-spinner"
 import { 
   LucideUser, 
   LucideMail, 
@@ -468,8 +469,8 @@ export default function RegisterPage() {
             <Button type="submit" className="w-full h-11 text-base" disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
-                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-background border-t-transparent" />
-                  Creating Account...
+                  <LoadingSpinnerCompact />
+                  <span className="ml-2">Creating Account...</span>
                 </>
               ) : (
                 <>

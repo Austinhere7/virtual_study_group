@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Switch } from "@/components/ui/switch"
+import { LoadingSpinner } from "@/components/loading-spinner"
 import { LucideUser, LucideLock, LucideBell, LucideShield } from "lucide-react"
 
 /**
@@ -33,16 +34,30 @@ export default function SettingsPage() {
   useEffect(() => {
     const userData = localStorage.getItem("user")
     if (userData) {
-      setUser(JSON.parse(userData))
+      const parsedUser = JSON.parse(userData)
+      setUser(parsedUser)
+      fetchProfile(parsedUser.id)
     }
-    fetchProfile()
     checkEmailVerification()
   }, [])
 
-  const fetchProfile = async () => {
+  const fetchProfile = async (userId: string) => {
     try {
+      const userProfileKey = `userProfile_${userId}`
+      
+      // First check localStorage for user-specific profile
+      const savedProfile = localStorage.getItem(userProfileKey)
+      if (savedProfile) {
+        const profile = JSON.parse(savedProfile)
+        setProfile(profile)
+        setLoading(false)
+        return
+      }
+      
+      // Otherwise fetch from API
       const res = await fetch("/api/profile/me")
       const data = await res.json()
+      localStorage.setItem(userProfileKey, JSON.stringify(data))
       setProfile(data)
       setLoading(false)
     } catch (error) {
@@ -102,33 +117,29 @@ export default function SettingsPage() {
 
   const handleUpdatePreferences = async (key, value) => {
     try {
+      const userData = localStorage.getItem("user")
+      if (!userData) return
+      
+      const parsedUser = JSON.parse(userData)
+      
       await fetch("/api/profile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           preferences: {
-            ...profile.preferences,
+            ...profile?.preferences,
             [key]: value,
           },
         }),
       })
-      fetchProfile()
+      fetchProfile(parsedUser.id)
     } catch (error) {
       console.error("Failed to update preferences:", error)
     }
   }
 
   if (loading) {
-    return (
-      <div className="container mx-auto px-4 py-12">
-        <div className="flex items-center justify-center h-96">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading settings...</p>
-          </div>
-        </div>
-      </div>
-    )
+    return <LoadingSpinner fullScreen text="Loading settings..." />
   }
 
   return (

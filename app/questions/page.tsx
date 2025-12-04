@@ -2,7 +2,8 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -11,19 +12,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { LoadingSpinner } from "@/components/loading-spinner"
 import { LucideMessageSquare, LucideThumbsUp, LucideThumbsDown, LucideCheck, LucideSearch } from "lucide-react"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
 
 // Mock data for questions
-const mockQuestions = [
+const initialMockQuestions = [
   {
     id: 1,
     title: "How do you solve a quadratic equation using the quadratic formula?",
@@ -119,6 +112,9 @@ const mockAnswers = [
 ]
 
 export default function QuestionsPage() {
+  const [questions, setQuestions] = useState([])
+  const [user, setUser] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null)
   const [askDialogOpen, setAskDialogOpen] = useState(false)
@@ -129,12 +125,34 @@ export default function QuestionsPage() {
   })
   const [activeQuestion, setActiveQuestion] = useState<number | null>(null)
   const [newAnswer, setNewAnswer] = useState("")
+  const [votedItems, setVotedItems] = useState<Record<string, 'up' | 'down'>>({})
+
+  // Load questions from localStorage on mount
+  useEffect(() => {
+    const userData = localStorage.getItem("user")
+    if (userData) {
+      setUser(JSON.parse(userData))
+    }
+
+    const savedQuestions = localStorage.getItem("questions")
+    if (savedQuestions) {
+      try {
+        setQuestions(JSON.parse(savedQuestions))
+      } catch (error) {
+        console.error("Failed to load questions:", error)
+        setQuestions([...initialMockQuestions])
+      }
+    } else {
+      setQuestions([...initialMockQuestions])
+    }
+    setLoading(false)
+  }, [])
 
   // Get unique subjects for filter
-  const subjects = Array.from(new Set(mockQuestions.map((q) => q.subject)))
+  const subjects = Array.from(new Set(questions.map((q) => q.subject)))
 
   // Filter questions based on search term and selected subject
-  const filteredQuestions = mockQuestions.filter((question) => {
+  const filteredQuestions = questions.filter((question) => {
     const matchesSearch =
       question.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       question.content.toLowerCase().includes(searchTerm.toLowerCase())
@@ -145,16 +163,36 @@ export default function QuestionsPage() {
   // Handle form submission for new question
   const handleAskQuestion = (e: React.FormEvent) => {
     e.preventDefault()
-    // In a real app, you would submit the question to a server here
-    console.log("Asking question:", newQuestion)
+    
+    if (!newQuestion.title || !newQuestion.content || !newQuestion.subject) {
+      alert("Please fill in all fields")
+      return
+    }
+
+    const question = {
+      id: Math.max(...questions.map(q => q.id), 0) + 1,
+      title: newQuestion.title,
+      content: newQuestion.content,
+      author: user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : "Anonymous",
+      authorAvatar: user?.avatar || "/placeholder.svg?height=40&width=40",
+      date: new Date().toISOString(),
+      subject: newQuestion.subject,
+      answers: 0,
+      solved: false,
+      votes: 0,
+    }
+
+    const updatedQuestions = [question, ...questions]
+    setQuestions(updatedQuestions)
+    localStorage.setItem("questions", JSON.stringify(updatedQuestions))
+    
     setAskDialogOpen(false)
-    // Reset form
     setNewQuestion({
       title: "",
       content: "",
       subject: "",
     })
-    // Show success message or update UI
+    alert("Question posted successfully!")
   }
 
   // Handle form submission for new answer
@@ -167,6 +205,20 @@ export default function QuestionsPage() {
     // Show success message or update UI
   }
 
+  // Handle voting
+  const handleVote = (itemId: string, type: 'up' | 'down') => {
+    const currentVote = votedItems[itemId]
+    if (currentVote === type) {
+      // Remove vote
+      const newVotes = { ...votedItems }
+      delete newVotes[itemId]
+      setVotedItems(newVotes)
+    } else {
+      // Add or change vote
+      setVotedItems({ ...votedItems, [itemId]: type })
+    }
+  }
+
   // Format date to relative time (e.g., "2 days ago")
   const formatRelativeTime = (dateString: string) => {
     const date = new Date(dateString)
@@ -177,6 +229,14 @@ export default function QuestionsPage() {
     if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`
     if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`
     return `${Math.floor(diffInSeconds / 86400)} days ago`
+  }
+
+  if (loading) {
+    return <LoadingSpinner fullScreen text="Loading Q&A Forum..." />
+  }
+
+  if (!isAuthenticated) {
+    return null
   }
 
   return (
@@ -323,10 +383,21 @@ export default function QuestionsPage() {
                               )}
                             </div>
                           </div>
-                          <div className="flex items-center space-x-2">
-                            <Button variant="outline" size="sm">
+                          <div className="flex items-center space-x-1">
+                            <Button 
+                              variant={votedItems[`q-${question.id}`] === 'up' ? "default" : "outline"} 
+                              size="sm"
+                              onClick={() => handleVote(`q-${question.id}`, 'up')}
+                            >
                               <LucideThumbsUp className="h-4 w-4 mr-1" />
-                              {question.votes}
+                              {question.votes + (votedItems[`q-${question.id}`] === 'up' ? 1 : votedItems[`q-${question.id}`] === 'down' ? -1 : 0)}
+                            </Button>
+                            <Button 
+                              variant={votedItems[`q-${question.id}`] === 'down' ? "destructive" : "ghost"} 
+                              size="sm"
+                              onClick={() => handleVote(`q-${question.id}`, 'down')}
+                            >
+                              <LucideThumbsDown className="h-4 w-4" />
                             </Button>
                           </div>
                         </div>
@@ -364,12 +435,20 @@ export default function QuestionsPage() {
                           <p className="whitespace-pre-line">{answer.content}</p>
                         </CardContent>
                         <CardFooter className="flex justify-between">
-                          <div className="flex items-center space-x-2">
-                            <Button variant="ghost" size="sm">
+                          <div className="flex items-center space-x-1">
+                            <Button 
+                              variant={votedItems[`a-${answer.id}`] === 'up' ? "default" : "ghost"} 
+                              size="sm"
+                              onClick={() => handleVote(`a-${answer.id}`, 'up')}
+                            >
                               <LucideThumbsUp className="h-4 w-4 mr-1" />
-                              {answer.votes}
+                              {answer.votes + (votedItems[`a-${answer.id}`] === 'up' ? 1 : votedItems[`a-${answer.id}`] === 'down' ? -1 : 0)}
                             </Button>
-                            <Button variant="ghost" size="sm">
+                            <Button 
+                              variant={votedItems[`a-${answer.id}`] === 'down' ? "destructive" : "ghost"} 
+                              size="sm"
+                              onClick={() => handleVote(`a-${answer.id}`, 'down')}
+                            >
                               <LucideThumbsDown className="h-4 w-4" />
                             </Button>
                           </div>

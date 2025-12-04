@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { LoadingSpinnerCompact } from "@/components/loading-spinner"
 import { 
   LucideMail, 
   LucideLock, 
@@ -182,8 +183,8 @@ export default function LoginPage() {
             <Button type="submit" className="w-full h-11 text-base" disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
-                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-background border-t-transparent" />
-                  Signing In...
+                  <LoadingSpinnerCompact />
+                  <span className="ml-2">Signing In...</span>
                 </>
               ) : (
                 <>

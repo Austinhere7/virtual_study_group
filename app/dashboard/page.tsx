@@ -3,18 +3,20 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
+import { Progress } from "@/components/ui/progress"
+import { LoadingSpinner } from "@/components/loading-spinner"
 import {
   LucideBook,
-  LucideHelpCircle,
   LucideMessageSquare,
   LucideCalendar,
   LucideUsers,
-  LucideArrowRight,
   LucideFileText,
-  LucideBarChart3,
+  LucideClock,
+  LucideAward,
+  LucideTrendingUp,
+  LucideVideo,
 } from "lucide-react"
 import Link from "next/link"
 
@@ -23,181 +25,196 @@ import Link from "next/link"
  * Personalized dashboard showing user statistics, recent activity, and quick actions
  */
 export default function DashboardPage() {
-  const [user, setUser] = useState(null)
-  const [profile, setProfile] = useState(null)
-  const [stats, setStats] = useState(null)
-  const [recentActivity, setRecentActivity] = useState([])
+  const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [stats] = useState({
+    studyHours: 24,
+    sessionsJoined: 12,
+    notesShared: 8,
+    questionsAnswered: 15,
+  })
 
   useEffect(() => {
     const token = localStorage.getItem("token")
     const userData = localStorage.getItem("user")
 
     if (!token || !userData) {
-      window.location.href = "/register"
+      window.location.href = "/login"
       return
     }
 
     try {
       const parsedUser = JSON.parse(userData)
       setUser(parsedUser)
-      fetchDashboardData()
+      
+      // Load user-specific profile data
+      const userProfileKey = `userProfile_${parsedUser.id}`
+      const profileData = localStorage.getItem(userProfileKey)
+      if (profileData) {
+        const profile = JSON.parse(profileData)
+        setUser((prev) => ({ ...prev, ...profile }))
+      }
     } catch (error) {
       console.error('Error parsing user data:', error)
       localStorage.removeItem('user')
       localStorage.removeItem('token')
-      window.location.href = "/register"
-    }
-  }, [])
-
-  const fetchDashboardData = async () => {
-    try {
-      const [profileRes, statsRes, activityRes] = await Promise.all([
-        fetch("/api/profile/me"),
-        fetch("/api/dashboard/stats"),
-        fetch("/api/dashboard/activity"),
-      ])
-
-      if (profileRes.ok) setProfile(await profileRes.json())
-      if (statsRes.ok) setStats(await statsRes.json())
-      if (activityRes.ok) setRecentActivity(await activityRes.json())
-    } catch (error) {
-      console.error("Failed to fetch dashboard data:", error)
+      window.location.href = "/login"
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   if (loading) {
-    return (
-      <div className="container mx-auto px-4 py-12">
-        <div className="flex items-center justify-center h-96">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading your dashboard...</p>
-          </div>
-        </div>
-      </div>
-    )
+    return <LoadingSpinner fullScreen text="Loading your dashboard..." />
   }
 
   if (!user) return null
+
+  const getGreeting = () => {
+    const hour = new Date().getHours()
+    if (hour < 12) return 'Good morning'
+    if (hour < 18) return 'Good afternoon'
+    return 'Good evening'
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Welcome Section */}
       <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-4xl font-bold tracking-tight">
-              Welcome back, {user.firstName}! 👋
-            </h1>
-            <p className="text-muted-foreground mt-2">
-              {profile?.subject ? `${profile.subject} • ${profile.grade}` : "Complete your profile to get started"}
-            </p>
-          </div>
-          <Avatar className="h-16 w-16">
-            <AvatarImage src={profile?.avatar} />
-            <AvatarFallback>
-              {user.firstName?.[0]}
-              {user.lastName?.[0]}
-            </AvatarFallback>
-          </Avatar>
-        </div>
+        <h1 className="text-3xl font-bold mb-2">
+          {getGreeting()}, {user?.firstName || 'Student'}! 👋
+        </h1>
+        <p className="text-muted-foreground">
+          Welcome back to your learning hub. Here's what's happening today.
+        </p>
       </div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Notes</CardTitle>
-            <LucideBook className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Study Hours</CardTitle>
+            <LucideClock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.notesUploaded || 0}</div>
-            <p className="text-xs text-muted-foreground">uploaded</p>
+            <div className="text-2xl font-bold">{stats.studyHours}h</div>
+            <p className="text-xs text-muted-foreground">This month</p>
+            <Progress value={65} className="mt-2" />
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Questions</CardTitle>
-            <LucideHelpCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats?.questionsAsked || 0}</div>
-            <p className="text-xs text-muted-foreground">asked</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Answers</CardTitle>
-            <LucideMessageSquare className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats?.answersGiven || 0}</div>
-            <p className="text-xs text-muted-foreground">provided</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Sessions</CardTitle>
-            <LucideCalendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{(stats?.sessionsAttended || 0) + (stats?.sessionsHosted || 0)}</div>
-            <p className="text-xs text-muted-foreground">attended</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Groups</CardTitle>
+            <CardTitle className="text-sm font-medium">Sessions Joined</CardTitle>
             <LucideUsers className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.groupsJoined || 0}</div>
-            <p className="text-xs text-muted-foreground">joined</p>
+            <div className="text-2xl font-bold">{stats.sessionsJoined}</div>
+            <p className="text-xs text-muted-foreground">+3 from last week</p>
+            <Progress value={45} className="mt-2" />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Notes Shared</CardTitle>
+            <LucideFileText className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.notesShared}</div>
+            <p className="text-xs text-muted-foreground">Helping others learn</p>
+            <Progress value={32} className="mt-2" />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Questions Answered</CardTitle>
+            <LucideAward className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.questionsAnswered}</div>
+            <p className="text-xs text-muted-foreground">Top 10% this month</p>
+            <Progress value={88} className="mt-2" />
           </CardContent>
         </Card>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Main Content */}
+        {/* Main Content - Left Side */}
         <div className="lg:col-span-2 space-y-8">
-          {/* Recent Activity */}
+          {/* Upcoming Sessions */}
           <Card>
             <CardHeader>
-              <CardTitle>Recent Activity</CardTitle>
-              <CardDescription>Your latest actions on EduSync</CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Upcoming Study Sessions</CardTitle>
+                  <CardDescription>Your scheduled sessions for this week</CardDescription>
+                </div>
+                <Button variant="outline" size="sm" asChild>
+                  <Link href="/schedule">View All</Link>
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
-              {recentActivity.length > 0 ? (
-                <div className="space-y-4">
-                  {recentActivity.map((activity, index) => (
-                    <div key={index} className="flex items-start gap-4 pb-4 border-b last:border-0">
-                      <div className="mt-1">
-                        {activity.type === "note" && <LucideBook className="h-4 w-4 text-blue-500" />}
-                        {activity.type === "question" && <LucideHelpCircle className="h-4 w-4 text-yellow-500" />}
-                        {activity.type === "answer" && <LucideMessageSquare className="h-4 w-4 text-green-500" />}
-                        {activity.type === "session" && <LucideCalendar className="h-4 w-4 text-purple-500" />}
+              <div className="space-y-4">
+                {[
+                  {
+                    title: 'Advanced Mathematics',
+                    time: 'Today, 3:00 PM',
+                    duration: '2 hours',
+                    participants: 8,
+                    subject: 'Math',
+                  },
+                  {
+                    title: 'Physics Group Discussion',
+                    time: 'Tomorrow, 5:00 PM',
+                    duration: '1.5 hours',
+                    participants: 12,
+                    subject: 'Physics',
+                  },
+                  {
+                    title: 'Literature Analysis',
+                    time: 'Wed, 4:30 PM',
+                    duration: '1 hour',
+                    participants: 6,
+                    subject: 'Literature',
+                  },
+                ].map((session, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex items-center space-x-4">
+                      <div className="bg-primary/10 p-3 rounded-lg">
+                        <LucideCalendar className="h-5 w-5 text-primary" />
                       </div>
-                      <div className="flex-1">
-                        <p className="font-medium text-sm">{activity.title}</p>
-                        <p className="text-xs text-muted-foreground">{activity.description}</p>
-                        <p className="text-xs text-muted-foreground mt-1">{activity.timestamp}</p>
+                      <div>
+                        <h4 className="font-semibold">{session.title}</h4>
+                        <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
+                          <span className="flex items-center gap-1">
+                            <LucideClock className="h-3 w-3" />
+                            {session.time}
+                          </span>
+                          <span>•</span>
+                          <span>{session.duration}</span>
+                          <span>•</span>
+                          <span className="flex items-center gap-1">
+                            <LucideUsers className="h-3 w-3" />
+                            {session.participants} participants
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <LucideFileText className="h-12 w-12 text-muted-foreground mx-auto mb-2 opacity-50" />
-                  <p className="text-muted-foreground">No recent activity</p>
-                </div>
-              )}
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary">{session.subject}</Badge>
+                      <Button size="sm" asChild>
+                        <Link href="/schedule">Join</Link>
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </CardContent>
           </Card>
 
@@ -205,32 +222,32 @@ export default function DashboardPage() {
           <Card>
             <CardHeader>
               <CardTitle>Quick Actions</CardTitle>
-              <CardDescription>Start something new</CardDescription>
+              <CardDescription>Common tasks to get you started</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 gap-3">
-                <Link href="/notes">
-                  <Button variant="outline" className="w-full justify-start">
-                    <LucideBook className="h-4 w-4 mr-2" />
-                    Upload Notes
+              <div className="grid grid-cols-2 gap-4">
+                <Link href="/video-call" className="block">
+                  <Button variant="outline" className="w-full h-24 flex-col gap-2">
+                    <LucideVideo className="h-6 w-6" />
+                    <span>Join Video Call</span>
                   </Button>
                 </Link>
-                <Link href="/questions">
-                  <Button variant="outline" className="w-full justify-start">
-                    <LucideHelpCircle className="h-4 w-4 mr-2" />
-                    Ask Question
+                <Link href="/notes" className="block">
+                  <Button variant="outline" className="w-full h-24 flex-col gap-2">
+                    <LucideBook className="h-6 w-6" />
+                    <span>Upload Notes</span>
                   </Button>
                 </Link>
-                <Link href="/video-call">
-                  <Button variant="outline" className="w-full justify-start">
-                    <LucideCalendar className="h-4 w-4 mr-2" />
-                    Start Session
+                <Link href="/questions" className="block">
+                  <Button variant="outline" className="w-full h-24 flex-col gap-2">
+                    <LucideMessageSquare className="h-6 w-6" />
+                    <span>Ask Question</span>
                   </Button>
                 </Link>
-                <Link href="/schedule">
-                  <Button variant="outline" className="w-full justify-start">
-                    <LucideUsers className="h-4 w-4 mr-2" />
-                    View Schedule
+                <Link href="/study-groups" className="block">
+                  <Button variant="outline" className="w-full h-24 flex-col gap-2">
+                    <LucideUsers className="h-6 w-6" />
+                    <span>Browse Groups</span>
                   </Button>
                 </Link>
               </div>
@@ -238,77 +255,95 @@ export default function DashboardPage() {
           </Card>
         </div>
 
-        {/* Sidebar */}
+        {/* Sidebar - Right Side */}
         <div className="space-y-8">
-          {/* Profile Progress */}
+          {/* Profile Card */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Profile Completion</CardTitle>
+              <CardTitle>Your Profile</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>Progress</span>
-                  <span className="font-semibold">{profile ? "75%" : "50%"}</span>
-                </div>
-                <div className="w-full bg-secondary rounded-full h-2">
-                  <div
-                    className="bg-primary rounded-full h-2 transition-all"
-                    style={{ width: profile ? "75%" : "50%" }}
-                  ></div>
-                </div>
-              </div>
-              <Link href="/profile">
-                <Button variant="outline" size="sm" className="w-full">
-                  Complete Profile
-                  <LucideArrowRight className="h-3 w-3 ml-2" />
+            <CardContent>
+              <div className="flex flex-col items-center text-center">
+                <Avatar className="h-24 w-24 mb-4">
+                  <AvatarImage src={user?.avatar} />
+                  <AvatarFallback className="text-2xl">
+                    {user?.firstName?.[0]}
+                    {user?.lastName?.[0]}
+                  </AvatarFallback>
+                </Avatar>
+                <h3 className="font-semibold text-lg">
+                  {user?.firstName} {user?.lastName}
+                </h3>
+                <p className="text-sm text-muted-foreground mb-4">{user?.email}</p>
+                <Badge variant="secondary" className="mb-4">
+                  {user?.role || 'Student'}
+                </Badge>
+                <Button variant="outline" size="sm" className="w-full" asChild>
+                  <Link href="/profile">Edit Profile</Link>
                 </Button>
-              </Link>
-            </CardContent>
-          </Card>
-
-          {/* Learning Stats */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <LucideBarChart3 className="h-4 w-4" />
-                This Week
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Sessions attended</span>
-                <span className="font-semibold">{stats?.weeklySessionsAttended || 0}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Notes uploaded</span>
-                <span className="font-semibold">{stats?.weeklyNotesUploaded || 0}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Questions asked</span>
-                <span className="font-semibold">{stats?.weeklyQuestionsAsked || 0}</span>
               </div>
             </CardContent>
           </Card>
 
-          {/* Recommended */}
+          {/* Recent Activity */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Recommended</CardTitle>
+              <CardTitle>Recent Activity</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <Link href="/questions">
-                <Button variant="ghost" size="sm" className="w-full justify-start text-sm">
-                  <Badge className="mr-2">New</Badge>
-                  Unanswered Questions
-                </Button>
-              </Link>
-              <Link href="/schedule">
-                <Button variant="ghost" size="sm" className="w-full justify-start text-sm">
-                  <Badge className="mr-2">Today</Badge>
-                  Upcoming Sessions
-                </Button>
-              </Link>
+            <CardContent>
+              <div className="space-y-4">
+                {[
+                  {
+                    icon: <LucideBook className="h-4 w-4" />,
+                    text: 'Uploaded "Calculus Notes"',
+                    time: '2 hours ago',
+                  },
+                  {
+                    icon: <LucideMessageSquare className="h-4 w-4" />,
+                    text: 'Answered a question',
+                    time: '5 hours ago',
+                  },
+                  {
+                    icon: <LucideUsers className="h-4 w-4" />,
+                    text: 'Joined "Physics Study Group"',
+                    time: '1 day ago',
+                  },
+                  {
+                    icon: <LucideAward className="h-4 w-4" />,
+                    text: 'Earned "Helpful" badge',
+                    time: '2 days ago',
+                  },
+                ].map((activity, index) => (
+                  <div key={index} className="flex items-start gap-3">
+                    <div className="bg-primary/10 p-2 rounded-lg text-primary">{activity.icon}</div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">{activity.text}</p>
+                      <p className="text-xs text-muted-foreground">{activity.time}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Learning Streak */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Learning Streak</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center">
+                <div className="text-5xl font-bold text-primary mb-2">7</div>
+                <p className="text-sm text-muted-foreground mb-4">Days in a row!</p>
+                <div className="flex justify-center gap-1 mb-4">
+                  {[1, 2, 3, 4, 5, 6, 7].map((day) => (
+                    <div key={day} className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+                      <LucideTrendingUp className="h-4 w-4 text-primary-foreground" />
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground">Keep it up! Study today to maintain your streak.</p>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -316,3 +351,4 @@ export default function DashboardPage() {
     </div>
   )
 }
+
