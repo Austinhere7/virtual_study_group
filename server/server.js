@@ -16,16 +16,17 @@ app.use(cors())
 // Connect to MongoDB
 mongoose
   .connect(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    useCreateIndex: true,
-    useFindAndModify: false,
+    serverSelectionTimeoutMS: 5000,
   })
-  .then(() => console.log("MongoDB Connected"))
+  .then(() => console.log("✅ MongoDB Connected"))
   .catch((err) => {
-    console.error("MongoDB Connection Error:", err.message)
-    process.exit(1)
+    console.error("❌ MongoDB Connection Error:", err.message)
+    console.warn("Server will continue without MongoDB. Some features may not work.")
   })
+
+mongoose.connection.on("error", (err) => {
+  console.error("📊 Mongoose connection error:", err.message)
+})
 
 // Define routes
 app.use("/api/auth", require("./routes/auth"))
